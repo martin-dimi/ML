@@ -6,7 +6,13 @@ from scipy.spatial.distance import cdist
 # Radial Basis Function / Gaussian
 def rbf_kernel(x1, x2, varSigma, lengthscale, noise = 0):
     if x2 is None:
-        d = cdist(x1, x1)
+        # print("noise ", noise)
+        # print("x1shape ", x1.shape)
+        # print("eye ", np.eye(x1.shape[0]))
+        # temp = noise*np.eye(x1.shape[0])
+        # print("tempshape ", temp.shape)
+        # print("temp ", temp)
+        d = cdist(x1, x1 + noise)
     else:
         d = cdist(x1, x2)
     K = varSigma * np.exp(-np.power(d, 2) / lengthscale)
@@ -79,7 +85,7 @@ def compute_gp_posterior(x1, y1, xStar, lengthScale, varSigma, noise):
     #       2. k(x1,x*1) .. k(x1, x*n)
     #       3. k(x*1, x*1) .. k(x*1, x*n)
 
-    k_xx = rbf_kernel(x1, None, varSigma, lengthScale)              # the subset containing only x's
+    k_xx = rbf_kernel(x1, None, varSigma, lengthScale, noise)              # the subset containing only x's
     k_starX = rbf_kernel(xStar, x1, varSigma, lengthScale)          # the subset containing both x's and x*'s
     k_starstar = rbf_kernel(xStar, xStar, varSigma, lengthScale)    # the subset containing only x*'s
 
@@ -98,8 +104,10 @@ y = np.sin(2*np.pi/x) + x*0.1 + 0.3*np.random.randn(x.shape[0])
 x = np.reshape(x, (-1, 1))
 y = np.reshape(y, (-1, 1))
 
+error_var = 0.1
+
 x_star = np.linspace(-6, 6, 500).reshape(-1, 1)
-mu_star, var_star = compute_gp_posterior(x, y, x_star, 3.0, 2.0, noise=5)
+mu_star, var_star = compute_gp_posterior(x, y, x_star, 3.0, 2.0, noise=error_var)
 fstar = np.random.multivariate_normal(mu_star, var_star, function_samples)
 
 gpFig = plt.figure()
