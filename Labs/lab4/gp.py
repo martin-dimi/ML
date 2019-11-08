@@ -4,15 +4,9 @@ from scipy.spatial.distance import cdist
 
 
 # Radial Basis Function / Gaussian
-def rbf_kernel(x1, x2, varSigma, lengthscale, noise = 0):
+def rbf_kernel(x1, x2, varSigma, lengthscale):
     if x2 is None:
-        # print("noise ", noise)
-        # print("x1shape ", x1.shape)
-        # print("eye ", np.eye(x1.shape[0]))
-        # temp = noise*np.eye(x1.shape[0])
-        # print("tempshape ", temp.shape)
-        # print("temp ", temp)
-        d = cdist(x1, x1 + noise)
+        d = cdist(x1, x1)
     else:
         d = cdist(x1, x2)
     K = varSigma * np.exp(-np.power(d, 2) / lengthscale)
@@ -49,10 +43,10 @@ linCov = lin_kernel(x, None, 1.0)
 whCov = white_kernel(x, None, 1.0)
 perCov = periodic_kernel(x, None, 1.0, 1, 2.0)
 
-# Mean vector set to 0
-mu = np.zeros(x.shape[0])
-
-# get 20 samples from the Gaussian Distribution
+# # Mean vector set to 0
+# mu = np.zeros(x.shape[0])
+# print("size of mu is: ", mu.shape)
+# print("size of cov is: ", rbfCov.shape)
 
 # fig = plt.figure()
 # ax1 = fig.add_subplot(221)
@@ -61,33 +55,40 @@ mu = np.zeros(x.shape[0])
 # ax4 = fig.add_subplot(224)
 
 
-# PLOTTING OUR PRIOR
+# # PLOTTING OUR PRIOR
+# # get 20 samples from the Gaussian Distribution
 # f = np.random.multivariate_normal(mu, rbfCov, 20)
+# print("size of f is: ", f.shape)
 # ax1.plot(x, f.T)
-#
+
 # f = np.random.multivariate_normal(mu, linCov, 20)
 # ax2.plot(x, f.T)
-#
+
 # f = np.random.multivariate_normal(mu, whCov, 20)
 # ax3.plot(x, f.T)
-#
+
 # f = np.random.multivariate_normal(mu, perCov, 20)
 # ax4.plot(x, f.T)
-#
+
 # plt.show()
 
 
 ####### Compute the posterior
-
 def compute_gp_posterior(x1, y1, xStar, lengthScale, varSigma, noise):
     # Computing the combined/joined kernal that includes:
     #       1. k(x1,x1) .. k(x1,xn)
     #       2. k(x1,x*1) .. k(x1, x*n)
     #       3. k(x*1, x*1) .. k(x*1, x*n)
 
-    k_xx = rbf_kernel(x1, None, varSigma, lengthScale, noise)              # the subset containing only x's
-    k_starX = rbf_kernel(xStar, x1, varSigma, lengthScale)          # the subset containing both x's and x*'s
-    k_starstar = rbf_kernel(xStar, xStar, varSigma, lengthScale)    # the subset containing only x*'s
+    # the subset containing only x's
+    k_xx = rbf_kernel(x1, None, varSigma, lengthScale) + noise*np.eye(x1.shape[0])     
+
+    # the subset containing both x's and x*'s     
+    k_starX = rbf_kernel(xStar, x1, varSigma, lengthScale) 
+
+    # the subset containing only x*'s         
+    k_starstar = rbf_kernel(xStar, xStar, varSigma, lengthScale)
+
 
     # Compute the mean and var using the formulas we computed for GP
     mu = k_starX.dot(np.linalg.inv(k_xx)).dot(y1)
@@ -97,7 +98,7 @@ def compute_gp_posterior(x1, y1, xStar, lengthScale, varSigma, noise):
 
 
 data_samples = 3
-function_samples = 300
+function_samples = 200
 x = np.linspace(-3.1, 3, data_samples)
 y = np.sin(2*np.pi/x) + x*0.1 + 0.3*np.random.randn(x.shape[0])
 
@@ -106,18 +107,24 @@ y = np.reshape(y, (-1, 1))
 
 error_var = 0.1
 
+# x_star are the values for the fuctions we want (lines)
 x_star = np.linspace(-6, 6, 500).reshape(-1, 1)
+
+# Now compute the function space (GP)
 mu_star, var_star = compute_gp_posterior(x, y, x_star, 3.0, 2.0, noise=error_var)
 fstar = np.random.multivariate_normal(mu_star, var_star, function_samples)
 
 gpFig = plt.figure()
-ax = gpFig.add_subplot(111)
-ax.plot(x_star, fstar.T)
-ax.scatter(x, y, 200, 'k', '*', zorder=5)
+
+# Display the GP
+axGP = gpFig.add_subplot(121)
+axGP.plot(x_star, fstar.T)
+axGP.scatter(x, y, 200, 'k', '*', zorder=5)
 
 # Display covariance
-# va = var_star.diagonal()
-# ax.fill_between(x_star[:,0], (mu_star - va), (mu_star + va))
+axCov = gpFig.add_subplot(122)
+va = var_star.diagonal()
+axCov.fill_between(x_star[:,0], (mu_star - va), (mu_star + va))
 
 plt.show()
 
