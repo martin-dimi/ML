@@ -81,7 +81,7 @@ index = np.random.permutation(X.shape[0])
 
 # for i in range(50,):
 samples = 50
-i = 10
+i = 1000
 
 x_i = X[index[:i], :]
 y_i = Y[index[:i]]

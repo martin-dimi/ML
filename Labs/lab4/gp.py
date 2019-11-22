@@ -98,14 +98,14 @@ def compute_gp_posterior(x1, y1, xStar, lengthScale, varSigma, noise):
 
 
 data_samples = 3
-function_samples = 200
+function_samples = 2
 x = np.linspace(-3.1, 3, data_samples)
 y = np.sin(2*np.pi/x) + x*0.1 + 0.3*np.random.randn(x.shape[0])
 
 x = np.reshape(x, (-1, 1))
 y = np.reshape(y, (-1, 1))
 
-error_var = 0.1
+error_var = 0
 
 # x_star are the values for the fuctions we want (lines)
 x_star = np.linspace(-6, 6, 500).reshape(-1, 1)
