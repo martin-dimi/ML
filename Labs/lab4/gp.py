@@ -97,8 +97,8 @@ def compute_gp_posterior(x1, y1, xStar, lengthScale, varSigma, noise):
     return mu.reshape(500), var
 
 
-data_samples = 3
-function_samples = 2
+data_samples = 1
+function_samples = 100
 x = np.linspace(-3.1, 3, data_samples)
 y = np.sin(2*np.pi/x) + x*0.1 + 0.3*np.random.randn(x.shape[0])
 
